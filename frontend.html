@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kubecost Dashboard</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #f5f6f8;
+            min-height: 100vh;
+            color: #1a1a1a;
+        }
+
+        .page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 32px 20px;
+        }
+
+        .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .logo-text {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1bb76e;
+            letter-spacing: -0.5px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pill-time {
+            padding: 7px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1.5px solid #d0d5dd;
+            color: #667085;
+            cursor: pointer;
+            background: #fff;
+        }
+
+        .pill-time:hover {
+            background: #f0f1f3;
+        }
+
+        .crumb-wrap {
+            display: flex;
+            align-items: center;
+            background: #1bb76e;
+            border-radius: 22px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .crumb {
+            padding: 7px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 22px;
+            transition: background 0.15s;
+        }
+
+        .crumb:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .crumb.active {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .crumb-sep {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            padding: 0 2px;
+        }
+
+        .agg-label {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            border: 1.5px solid #1bb76e;
+            border-radius: 10px;
+            padding: 5px 14px;
+            margin-left: 4px;
+            background: #fff;
+        }
+
+        .agg-by {
+            font-size: 11px;
+            color: #667085;
+        }
+
+        .agg-val {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+            margin-bottom: 20px;
+        }
+
+        .chart-area {
+            display: flex;
+            align-items: flex-end;
+            gap: 24px;
+            height: 170px;
+            padding: 0 8px;
+            border-bottom: 1.5px dashed #e0e0e0;
+            margin-bottom: 4px;
+        }
+
+        .bar-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            flex: 1;
+            max-width: 140px;
+        }
+
+        .bar-col:hover .bar {
+            opacity: 0.82;
+            transform: scaleY(1.04);
+            transform-origin: bottom;
+        }
+
+        .bar {
+            width: 80%;
+            border-radius: 10px 10px 0 0;
+            transition: all 0.2s;
+        }
+
+        .chart-labels {
+            display: flex;
+            gap: 24px;
+            padding: 8px 8px 0;
+            margin-bottom: 24px;
+        }
+
+        .chart-label {
+            flex: 1;
+            max-width: 140px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+
+        .table-wrap {
+            border-radius: 12px;
+            border: 1.5px solid #e4e7ec;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead th {
+            background: #f9fafb;
+            padding: 10px 14px;
+            font-weight: 500;
+            color: #667085;
+            text-align: right;
+            font-size: 12px;
+            letter-spacing: 0.03em;
+        }
+
+        thead th:first-child {
+            text-align: left;
+        }
+
+        tbody tr {
+            border-top: 1px solid #f0f1f3;
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+
+        tbody tr:hover {
+            background: #f5f6f8;
+        }
+
+        tbody td {
+            padding: 13px 14px;
+            color: #1a1a1a;
+            text-align: right;
+            font-family: 'DM Mono', monospace;
+            font-size: 13px;
+        }
+
+        tbody td:first-child {
+            text-align: left;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .total-col {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .eff-pill {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .eff-low {
+            background: #fde8e8;
+            color: #c0392b;
+        }
+
+        .eff-mid {
+            background: #fef3cd;
+            color: #8a6200;
+        }
+
+        .eff-high {
+            background: #e1f8ee;
+            color: #0e7a45;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff;
+            border: 1.5px solid #d0d5dd;
+            border-radius: 20px;
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #667085;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.15s;
+            margin-left: auto;
+        }
+
+        .back-btn:hover {
+            background: #f0f1f3;
+            color: #1a1a1a;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 12px;
+            font-style: italic;
+        }
+
+        @media (max-width: 600px) {
+            .chart-area {
+                gap: 10px;
+            }
+
+            .chart-labels {
+                gap: 10px;
+            }
+
+            thead th,
+            tbody td {
+                padding: 8px 8px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <div id="root"></div>
+    </div>
+    <script>
+        const DATA = {
+            clusters: [
+                { id: 'A', name: 'Cluster A', cpu: 2463, ram: 1368, storage: 246, network: 307, gpu: 821, eff: 10, total: 6867 },
+                { id: 'B', name: 'Cluster B', cpu: 2127, ram: 1181, storage: 212, network: 265, gpu: 0, eff: 28, total: 5574 },
+                { id: 'C', name: 'Cluster C', cpu: 1702, ram: 945, storage: 170, network: 212, gpu: 567, eff: 15, total: 4580 },
+                { id: 'D', name: 'Cluster D', cpu: 1057, ram: 587, storage: 105, network: 132, gpu: 0, eff: 43, total: 2209 },
+            ],
+            namespaces: {
+                A: [
+                    { id: 'A', name: 'Namespace A', cpu: 1234, ram: 685, storage: 123, network: 153, gpu: 411, eff: 5, total: 3440 },
+                    { id: 'B', name: 'Namespace B', cpu: 742, ram: 412, storage: 73, network: 92, gpu: 246, eff: 20, total: 2067 },
+                    { id: 'C', name: 'Namespace C', cpu: 372, ram: 207, storage: 36, network: 46, gpu: 124, eff: 50, total: 1037 },
+                    { id: 'D', name: 'Namespace D', cpu: 125, ram: 69, storage: 12, network: 15, gpu: 41, eff: 40, total: 347 },
+                ],
+                B: [
+                    { id: 'A', name: 'Namespace A', cpu: 980, ram: 540, storage: 98, network: 122, gpu: 0, eff: 32, total: 2810 },
+                    { id: 'B', name: 'Namespace B', cpu: 620, ram: 344, storage: 62, network: 77, gpu: 0, eff: 18, total: 1754 },
+                    { id: 'C', name: 'Namespace C', cpu: 320, ram: 178, storage: 32, network: 40, gpu: 0, eff: 45, total: 900 },
+                    { id: 'D', name: 'Namespace D', cpu: 207, ram: 119, storage: 20, network: 26, gpu: 0, eff: 60, total: 410 },
+                ],
+                C: [
+                    { id: 'A', name: 'Namespace A', cpu: 850, ram: 471, storage: 85, network: 106, gpu: 283, eff: 12, total: 2430 },
+                    { id: 'B', name: 'Namespace B', cpu: 512, ram: 284, storage: 51, network: 64, gpu: 170, eff: 22, total: 1460 },
+                    { id: 'C', name: 'Namespace C', cpu: 220, ram: 122, storage: 22, network: 27, gpu: 85, eff: 55, total: 590 },
+                    { id: 'D', name: 'Namespace D', cpu: 120, ram: 68, storage: 12, network: 15, gpu: 29, eff: 38, total: 340 },
+                ],
+                D: [
+                    { id: 'A', name: 'Namespace A', cpu: 530, ram: 294, storage: 53, network: 66, gpu: 0, eff: 48, total: 1110 },
+                    { id: 'B', name: 'Namespace B', cpu: 320, ram: 177, storage: 32, network: 40, gpu: 0, eff: 35, total: 720 },
+                    { id: 'C', name: 'Namespace C', cpu: 155, ram: 86, storage: 15, network: 19, gpu: 0, eff: 62, total: 310 },
+                    { id: 'D', name: 'Namespace D', cpu: 52, ram: 30, storage: 5, network: 7, gpu: 0, eff: 70, total: 169 },
+                ]
+            },
+            pods: {}
+        };
+
+        ['A', 'B', 'C', 'D'].forEach(cl => {
+            DATA.pods[cl] = {};
+            ['A', 'B', 'C', 'D'].forEach(ns => {
+                const nsData = DATA.namespaces[cl].find(n => n.id === ns);
+                const base = nsData.total;
+                DATA.pods[cl][ns] = [
+                    { id: 'A', name: 'Pod A', cpu: Math.round(base * 0.36), ram: Math.round(base * 0.20), storage: Math.round(base * 0.036), network: Math.round(base * 0.044), gpu: Math.round(base * 0.17), eff: 8, total: Math.round(base * 0.70) },
+                    { id: 'B', name: 'Pod B', cpu: Math.round(base * 0.10), ram: Math.round(base * 0.056), storage: Math.round(base * 0.01), network: Math.round(base * 0.012), gpu: Math.round(base * 0.10), eff: 40, total: Math.round(base * 0.28) },
+                    { id: 'C', name: 'Pod C', cpu: Math.round(base * 0.035), ram: Math.round(base * 0.02), storage: Math.round(base * 0.003), network: Math.round(base * 0.004), gpu: Math.round(base * 0.051), eff: 35, total: Math.round(base * 0.10) },
+                    { id: 'D', name: 'Pod D', cpu: Math.round(base * 0.015), ram: Math.round(base * 0.008), storage: Math.round(base * 0.001), network: Math.round(base * 0.025), gpu: Math.round(base * 0.017), eff: 70, total: Math.round(base * 0.042) },
+                ];
+            });
+        });
+
+        const COLORS = ['#1bb76e', '#32d583', '#57e89b', '#8ef3bc'];
+        const $ = id => document.getElementById(id);
+        let state = { level: 'cluster', cluster: null, namespace: null };
+
+        function fmt(n) { return '$' + n.toLocaleString(); }
+        function effClass(e) { return e <= 15 ? 'eff-low' : e <= 35 ? 'eff-mid' : 'eff-high'; }
+
+        function getRows() {
+            if (state.level === 'cluster') return DATA.clusters;
+            if (state.level === 'namespace') return DATA.namespaces[state.cluster];
+            return DATA.pods[state.cluster][state.namespace];
+        }
+
+        function crumbs() {
+            if (state.level === 'cluster') return [{ label: 'Cluster', agg: 'Cluster' }];
+            if (state.level === 'namespace') return [
+                { label: 'Cluster', agg: null, back: () => { state.level = 'cluster'; state.cluster = null; render(); } },
+                { label: 'Cluster ' + state.cluster + ' \u2014 Namespace', agg: 'Namespace' }
+            ];
+            return [
+                { label: 'Cluster', agg: null, back: () => { state.level = 'cluster'; state.cluster = null; state.namespace = null; render(); } },
+                { label: 'Cluster ' + state.cluster + ' \u2014 Namespace', agg: null, back: () => { state.level = 'namespace'; state.namespace = null; render(); } },
+                { label: 'Cluster ' + state.cluster + ' \u2014 Namespace ' + state.namespace + ' \u2014 Pods', agg: 'Pod' }
+            ];
+        }
+
+        function render() {
+            const rows = getRows();
+            const mx = Math.max(...rows.map(r => r.total));
+            const cr = crumbs();
+            const last = cr[cr.length - 1];
+
+            const crumbHtml = cr.map((c, i) => {
+                const isLast = i === cr.length - 1;
+                const sep = i < cr.length - 1 ? '<span class="crumb-sep"> › </span>' : '';
+                return `<span class="crumb ${isLast ? 'active' : ''}" ${c.back ? `id="crumb-${i}"` : ''}>${c.label}</span>${sep}`;
+            }).join('');
+
+            const barsHtml = rows.map((r, i) => {
+                const h = Math.round((r.total / mx) * 140);
+                return `<div class="bar-col" id="bar-${r.id}"><div class="bar" style="height:${h}px;background:${COLORS[i]};"></div></div>`;
+            }).join('');
+
+            const labelsHtml = rows.map(r => `<div class="chart-label">${r.name}</div>`).join('');
+
+            const tableRows = rows.map(r => `<tr id="row-${r.id}">
+    <td>${r.name}</td>
+    <td>${fmt(r.cpu)}</td>
+    <td>${fmt(r.ram)}</td>
+    <td>${fmt(r.storage)}</td>
+    <td>${fmt(r.network)}</td>
+    <td>${fmt(r.gpu)}</td>
+    <td><span class="eff-pill ${effClass(r.eff)}">${r.eff}%</span></td>
+    <td class="total-col">${fmt(r.total)}</td>
+  </tr>`).join('');
+
+            const hint = state.level !== 'pod'
+                ? `<p class="hint">Click a bar or row to drill down &rarr;</p>`
+                : `<p class="hint">Showing pod-level breakdown &mdash; Cluster ${state.cluster} / Namespace ${state.namespace}</p>`;
+
+            $('root').innerHTML = `
+    <div class="logo-row">
+      <svg width="30" height="30" viewBox="0 0 32 32" fill="none"><path d="M16 2C8.268 2 2 8.268 2 16s6.268 14 14 14 14-6.268 14-14S23.732 2 16 2z" fill="#1bb76e" opacity="0.15"/><path d="M10 22l3-8 5 4 3-10" stroke="#1bb76e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="12" r="2.5" fill="#1bb76e"/></svg>
+      <span class="logo-text">kubecost</span>
+      ${state.level !== 'cluster' ? `<button class="back-btn" id="back-btn">&larr; Back</button>` : ''}
+    </div>
+    <div class="topbar">
+      <span class="pill-time">Last 30 Days</span>
+      <div class="crumb-wrap">${crumbHtml}</div>
+      <div class="agg-label">
+        <span class="agg-by">Aggregated by:</span>
+        <span class="agg-val">${last.agg}</span>
+      </div>
+    </div>
+    ${hint}
+    <div class="card">
+      <div class="chart-area">${barsHtml}</div>
+      <div class="chart-labels">${labelsHtml}</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th></th><th>CPU</th><th>RAM</th><th>Storage</th><th>Network</th><th>GPU</th><th>Efficiency</th><th>Total</th>
+          </tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+            rows.forEach(r => {
+                const handler = () => drillDown(r);
+                const b = $('bar-' + r.id); if (b) b.addEventListener('click', handler);
+                const rw = $('row-' + r.id); if (rw) rw.addEventListener('click', handler);
+            });
+            cr.forEach((c, i) => { if (c.back) { const el = $(`crumb-${i}`); if (el) el.addEventListener('click', c.back); } });
+            const bb = $('back-btn');
+            if (bb) bb.addEventListener('click', () => {
+                if (state.level === 'namespace') { state.level = 'cluster'; state.cluster = null; }
+                else if (state.level === 'pod') { state.level = 'namespace'; state.namespace = null; }
+                render();
+            });
+        }
+
+        function drillDown(row) {
+            if (state.level === 'cluster') { state.level = 'namespace'; state.cluster = row.id; }
+            else if (state.level === 'namespace') { state.level = 'pod'; state.namespace = row.id; }
+            render();
+        }
+
+        render();
+    </script>
+</body>
+
+</html>
